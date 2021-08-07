@@ -1223,7 +1223,20 @@ ConsumeAction auto_bestNightcap()
 	int best = 0;
 	for(int i=1; i < count(actions); i++)
 	{
-		if(desirability(i) > desirability(best)) best = i;
+		if(desirability(i) < desirability(best))
+		{
+			// This item is less desirable than the best item found so far
+			continue;
+		}
+
+		if(desirability(i) == desirability(best) && mall_price(actions[i].it) >= mall_price(actions[best].it))
+		{
+			// This item is just as desirable as the best item, but it's not cheaper
+			continue;
+		}
+
+		// This item is either more desirable than the best item, or cheaper to consume
+		best = i;
 	}
 
 	return actions[best];
@@ -1328,16 +1341,30 @@ boolean auto_autoConsumeOne(string type, boolean simulate)
 
 	float best_desirability_per_fill = 0.0;
 	float best_adv_per_fill = 0.0;
+	int best_mall_price = 999999999;
 	int best = -1;
 	foreach i in result
 	{
 		float tentative_desirability_per_fill = actions[i].desirability/actions[i].size;
-		if (tentative_desirability_per_fill > best_desirability_per_fill)
+		int tentative_mall_price = mall_price(actions[i].it);
+
+		if (tentative_desirability_per_fill < best_desirability_per_fill)
 		{
-			best_desirability_per_fill = tentative_desirability_per_fill;
-			best_adv_per_fill = actions[i].adventures/actions[i].size;
-			best = i;
+			// This item is less desirable than the best item found so far
+			continue;
 		}
+
+		if (tentative_desirability_per_fill == best_desirability_per_fill && tentative_mall_price >= best_mall_price)
+		{
+			// This item is just as desirable as the best item, but it's not cheaper
+			continue;
+		}
+
+		// This item is either more desirable than the best item, or cheaper to consume
+		best_desirability_per_fill = tentative_desirability_per_fill;
+		best_adv_per_fill = actions[i].adventures/actions[i].size;
+		best_mall_price = tentative_mall_price;
+		best = i;
 	}
 
 	if (best == -1)
